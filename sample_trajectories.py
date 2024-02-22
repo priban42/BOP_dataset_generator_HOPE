@@ -41,9 +41,10 @@ def sample_trajectory(number_of_waypoints=10, poses_per_waypoint=10):
 
 def main():
     trajectories = []
-    for x in range(10):
-        trajectory = sample_trajectory(3, 30)
+    for x in range(100):
+        trajectory = sample_trajectory(3, 200)
         trajectories.append(trajectory)
+        print(f"\r{x} done", end='')
     with open('trajectories.p', 'wb') as file:
         pickle.dump(trajectories, file)
 

@@ -75,7 +75,6 @@ def arrange_static_scene(models_collection, obj_count = 7, density = 1):
             # print(f"{i}: {x}")
             move_obj_randomly(new_obj, obj_count*0.04/density)
             if not object_colides_with_collection(new_obj, output_collection):
-                print(x)
                 break
         if object_colides_with_collection(new_obj, output_collection):
             raise Exception(f"Could not find a place for object {new_obj.name_full} that is not in collision with {output_collection.name_full}.")
@@ -94,10 +93,10 @@ def get_point_on_hemi_sphere(r = 1, base_vector= np.array((1, 0, 0)), weight=1):
 def look_at_centre(camera):
     T_wc = np.asarray(camera.matrix_world)
     w = np.linalg.norm(pin.log3(T_wc[:3, :3]))
-    print(f"T_wc: {T_wc}")
+    # print(f"T_wc: {T_wc}")
     direction = T_wc[:3, 3]/np.linalg.norm(T_wc[:3, 3])
     new_w = direction*w
-    print(f"w: {w}")
+    # print(f"w: {w}")
     R = pin.exp3(new_w)
     T_wc[:3, :3] = R
     camera.matrix_world = Matrix(T_wc)
@@ -139,7 +138,7 @@ def rotate_camera_toward_point(camera):
     camera.matrix_world = edit_matrix_world(camera.matrix_world, fw_vect, right_vect, up_vect)
     bpy.context.view_layer.update()
     z2 = camera.rotation_euler.z
-    print(f"{180*z1/np.pi}, {180*z2/np.pi}")
+    # print(f"{180*z1/np.pi}, {180*z2/np.pi}")
     if abs(z1 - z2) > np.pi:
         if z1 > 0:
             camera.rotation_euler.z += 2*np.pi
@@ -174,18 +173,22 @@ def load_data(path: Path):
 def animate_object(obj, trajectory, length):
 
     for i, entry in enumerate(trajectory):
-        frame = i*length//len(trajectory)
+        frame = i
         obj.matrix_world = entry["SE3"]
         obj.location = entry["SE3"][:3, 3]
-        obj.location.z += 1
-        obj.location = obj.location*0.4
+        obj.location = obj.location*0.25
+        obj.location.z += 0.55
         bpy.context.view_layer.update()
         obj.keyframe_insert(data_path="location", frame=frame)
         obj.keyframe_insert(data_path="rotation_euler", frame=frame)
+        if i == length:
+            # print(f"here{length}")
+            break
 
-def create_dynamic_scene(trajectories, i = 0, length = 350):
-    trajectory = trajectories[i]
+def create_dynamic_scene(trajectories, t = 0, length = 350):
+
     collection = bpy.data.collections.get("Output")
-    obj = collection.objects[0]
-    animate_object(obj, trajectory, length)
-    generate_random_camera_trajectory(length, sphere_size = 1.0, weight=6, density=30, base_vector_offset=np.array((0, 0, 0.5)))
+    for i, obj in enumerate(collection.objects):
+        trajectory = trajectories[t*10 + i]
+        animate_object(obj, trajectory, length)
+        generate_random_camera_trajectory(length, sphere_size = 1.0, weight=6, density=30, base_vector_offset=np.array((0, 0, 0.5)))
